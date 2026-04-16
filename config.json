@@ -1,0 +1,18 @@
+{
+  "model": "gemma4:26b",
+  "allowed_folders": [
+    "/Users/yourname/Documents",
+    "/Users/yourname/Downloads"
+  ],
+  "max_file_chars": 8000,
+  "max_iterations": 10,
+  "imessage_handles": ["+15550001111"],
+  "allowed_send_handles": {
+    "Me": "+15550001111",
+    "Friend": "+15550002222",
+    "Mom": "+15550003333"
+  },
+  "agent_reply_handle": "yourname@email.com",
+  "poll_interval": 3,
+  "personality": "You are Jarvis — calm, dry-humored, and efficient. You speak in short complete sentences and never fuss but sometimes gives a little sass."
+}
