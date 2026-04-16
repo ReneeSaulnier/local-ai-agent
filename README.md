@@ -1,4 +1,4 @@
-# Jarvis — Local iMessage AI Agent
+# [Jarvis] Local iMessage AI Agent
 
 Jarvis is a local AI agent that runs on your Mac and responds to iMessages. Text it a question, ask it to find a file, create a note, or send a message to a contact — it handles it without anything leaving your machine.
 
@@ -26,7 +26,7 @@ Your Mac watches its local iMessage database (`~/Library/Messages/chat.db`) for 
 Install Python dependencies:
 
 ```bash
-pip install ollama pypdf
+pip install -r requirements.txt
 ```
 
 Pull the model:
@@ -39,7 +39,7 @@ ollama pull gemma4:26b
 
 ## Critical Setup: Mac Must Use a Different Apple ID than Your iPhone
 
-This is the most important requirement. Jarvis works by texting **yourself** — your iPhone sends a message to your Mac's iMessage identity, and the Mac replies.
+This is the most important requirement. Jarvis works by texting **yourself**; thus, your iPhone sends a message to your Mac's iMessage identity, and the Mac replies.
 
 If your Mac and iPhone share the same Apple ID and phone number, iMessage will deduplicate the conversation and Jarvis will not see your messages reliably.
 
@@ -75,10 +75,7 @@ Jarvis needs several macOS permissions to function. The first time each action r
 | Permission | App | Why |
 |---|---|---|
 | Full Disk Access | Terminal / your terminal app | Read `~/Library/Messages/chat.db` |
-| Accessibility | Terminal / your terminal app | Required for AppleScript automation |
-| Automation → Messages | Terminal / your terminal app | Send iMessages via AppleScript |
-| Automation → Notes | Terminal / your terminal app | Create Apple Notes via AppleScript |
-| Files and Folders → Documents | Messages.app | Attach files from Documents when sending |
+| Files and Folders | Messages.app | Attach files from Documents when sending |
 
 > **Terminal permission tip:** If you run Jarvis from Terminal.app, grant permissions to Terminal. If you use iTerm2 or another terminal, grant them to that app instead. The permissions follow whichever app launches the Python process.
 
@@ -131,7 +128,7 @@ Jarvis needs several macOS permissions to function. The first time each action r
 
 Contacts live in `config.json` under two keys depending on direction:
 
-### Who can command Jarvis (inbound)
+### This is who Jarvis is allowed to send messages to:
 
 Add their phone number to `imessage_handles`:
 
@@ -153,7 +150,7 @@ Add a name and number to `allowed_send_handles`:
 }
 ```
 
-Use the name exactly as you'd say it to Jarvis — "text Mom that I'll be late" will look up `"Mom"` in this map. If the name isn't found, Jarvis refuses and tells you who it knows.
+Use the name exactly as you'd say it to Jarvis. "text Mom that I'll be late" will look up `"Mom"` in this map. If the name isn't found, Jarvis refuses and tells you who it knows.
 
 ---
 
