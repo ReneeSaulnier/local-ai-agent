@@ -4,6 +4,7 @@ from pathlib import Path
 
 DB_PATH = Path.home() / "Library/Messages/chat.db"
 
+
 def debug_recent_handles() -> list[str]:
     conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
     try:
@@ -11,6 +12,7 @@ def debug_recent_handles() -> list[str]:
         return [row[0] for row in rows]
     finally:
         conn.close()
+
 
 def get_latest_rowid() -> int:
     """Get the current max rowid so we only process new messages going forward."""
@@ -20,6 +22,7 @@ def get_latest_rowid() -> int:
         return row[0] or 0
     finally:
         conn.close()
+
 
 def debug_new_rows(last_rowid: int) -> list:
     """Show all new message rows regardless of handle or direction."""
@@ -37,14 +40,13 @@ def debug_new_rows(last_rowid: int) -> list:
     finally:
         conn.close()
 
+
 def get_new_messages(last_rowid: int, handles: list[str], self_chat: str | None = None) -> list[dict]:
     """Return unprocessed incoming messages, including the chat_identifier to reply to.
 
     handles   — sender handles to watch for is_from_me=0 messages (other people texting you).
     self_chat — chat_identifier to watch for is_from_me=1 messages (your own messages
-                synced from iPhone when you text your own email identity). The caller is
-                responsible for dropping bot-reply echoes via SelfEchoFilter before
-                acting on these messages.
+                synced from iPhone when you text your own email identity).
     """
     handle_placeholders = ",".join("?" * len(handles))
     conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
@@ -52,7 +54,6 @@ def get_new_messages(last_rowid: int, handles: list[str], self_chat: str | None 
         # Case 1: is_from_me=0 — someone else texting you. Filter by sender handle.
         # Case 2: is_from_me=1 — your own message synced from iPhone (phone→email
         #         self-chat). handle_id is NULL so we match on chat_identifier instead.
-        #         Caller uses SelfEchoFilter to drop bot-reply echoes from this stream.
         # GROUP BY m.rowid prevents duplicates when a message belongs to multiple chats.
         self_chat_clause = "AND c.chat_identifier = ?" if self_chat else ""
         rows = conn.execute(f"""

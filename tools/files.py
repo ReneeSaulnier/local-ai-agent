@@ -4,17 +4,27 @@ from pathlib import Path
 import pypdf
 import ollama
 
-"""
-This file contains functions for file system access and other general tools.
-"""
+
+AGENT_CONFIG_PATHS = [
+    Path(__file__).resolve().parents[1] / "agent" / "config.json",
+    Path(__file__).resolve().parents[1] / "config.json",
+]
+
 
 def load_config() -> dict:
-    with open("config.json") as f:
-        return json.load(f)
+    for path in AGENT_CONFIG_PATHS:
+        if path.exists():
+            with open(path) as f:
+                return json.load(f)
+    raise FileNotFoundError("No agent config found")
 
 
 def get_model_name() -> str:
     return load_config()["model"]
+
+def get_coding_model_name() -> str:
+    config = load_config()
+    return config.get("coding_model") or config["model"]
 
 
 def is_allowed(path: str, allowed_folders: list[str]) -> bool:

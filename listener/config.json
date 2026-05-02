@@ -1,0 +1,5 @@
+{
+  "imessage_handles": ["+15551234567"],
+  "agent_reply_handle": "your-email@example.com",
+  "poll_interval": 3
+}

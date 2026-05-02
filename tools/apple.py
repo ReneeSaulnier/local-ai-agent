@@ -2,16 +2,31 @@ import json
 import shutil
 import subprocess
 import tempfile
+import sqlite3
 from pathlib import Path
 
-"""
-This file will contain functions that communicate with Apple apps (Messages, Notes, etc)
-"""
+
+DB_PATH = Path.home() / "Library/Messages/chat.db"
+
+AGENT_CONFIG_PATHS = [
+    Path(__file__).resolve().parents[1] / "agent" / "config.json",
+    Path(__file__).resolve().parents[1] / "config.json",
+]
 
 
 def _load_config() -> dict:
-    with open("config.json") as f:
-        return json.load(f)
+    for path in AGENT_CONFIG_PATHS:
+        if path.exists():
+            with open(path) as f:
+                return json.load(f)
+    raise FileNotFoundError("No agent config found")
+
+
+def _load_contacts(config: dict) -> dict[str, str]:
+    contacts = config.get("allow_list") or config.get("contacts") or config.get("allowed_send_handles") or {}
+    if isinstance(contacts, list):
+        return {str(name): str(name) for name in contacts}
+    return {str(name): str(identifier) for name, identifier in contacts.items()}
 
 
 def _is_allowed(path: str, allowed_folders: list[str]) -> bool:
@@ -93,6 +108,46 @@ def send_imessage(to: str, message: str, attachment: str | None = None) -> str:
     if attachment:
         return f"Message and attachment sent to {to} ({number})."
     return f"Message sent to {to} ({number})."
+
+
+def read_imessage(from_contact: str) -> str:
+    config = _load_config()
+    contacts = _load_contacts(config)
+    identifier = contacts.get(from_contact)
+    if not identifier:
+        known = ", ".join(sorted(contacts.keys()))
+        return f"Blocked: '{from_contact}' is not in the allowed contact list. Known contacts: {known}."
+
+    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    try:
+        row = conn.execute(
+            """
+            SELECT m.text
+            FROM message m
+            LEFT JOIN handle h ON m.handle_id = h.rowid
+            JOIN chat_message_join cmj ON m.rowid = cmj.message_id
+            JOIN chat c ON cmj.chat_id = c.rowid
+            WHERE m.text IS NOT NULL
+              AND m.text != ''
+              AND (
+                h.id = ?
+                OR c.chat_identifier = ?
+                OR c.guid = ?
+              )
+            ORDER BY m.date DESC, m.rowid DESC
+            LIMIT 1
+            """,
+            (identifier, identifier, identifier),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        return f"No recent message found from {from_contact}."
+
+    text = row[0]
+    return f'Last message from {from_contact}: "{text}"'
+
 
 
 def create_apple_note(title: str, body: str) -> str:

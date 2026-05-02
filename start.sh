@@ -4,7 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Kill any leftover processes from a previous run
-pkill -f "python listener.py" 2>/dev/null
+pkill -f "python -m listener.listener" 2>/dev/null
 sleep 1
 
 # Start Ollama if not already running
@@ -22,4 +22,4 @@ echo "  Press Ctrl+C to stop."
 echo "================================================"
 echo ""
 
-python listener.py
+python -m listener.listener

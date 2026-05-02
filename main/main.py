@@ -1,11 +1,11 @@
 import sys
 
-from agent import run_agent
+from agent.agent import run_agent
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python main.py \"your question here\"")
+        print("Usage: python -m main.main \"your question here\"")
         sys.exit(1)
 
     question = " ".join(sys.argv[1:])

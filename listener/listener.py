@@ -5,11 +5,13 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from agent import run_agent
-from echo_filter import SelfEchoFilter
-from imessage import get_latest_rowid, get_new_messages, send_imessage
+from agent.agent import run_agent
+from tools.imessage import get_latest_rowid, get_new_messages, send_imessage
 
-echo_filter = SelfEchoFilter(ttl=30)
+LISTENER_CONFIG_PATHS = [
+    Path(__file__).resolve().parent / "listener" / "config.json",
+    Path(__file__).resolve().parent / "config.json",
+]
 
 LOG_PATH = Path(__file__).parent / "agent.log"
 BLOCKED_LOG_PATH = Path(__file__).parent / "blocked.log"
@@ -80,7 +82,6 @@ def handle_message(reply_chat_id: str, rowid: int, text: str):
 
         print(f"[{ts()}] [send]  replying to rowid={rowid}...")
         answer = f"[Jarvis] {answer}"
-        echo_filter.register(answer)
         send_imessage(reply_chat_id, answer)
         print(f"[{ts()}] [send]  done.")
     except Exception as e:
@@ -91,8 +92,14 @@ def handle_message(reply_chat_id: str, rowid: int, text: str):
 
 
 def main():
-    with open("config.json") as f:
-        config = json.load(f)
+    config = None
+    for path in LISTENER_CONFIG_PATHS:
+        if path.exists():
+            with open(path) as f:
+                config = json.load(f)
+            break
+    if config is None:
+        raise FileNotFoundError("No listener config found")
 
     handles = config["imessage_handles"]
     self_chat = config.get("agent_reply_handle")
@@ -116,10 +123,6 @@ def main():
                 last_rowid = msg["rowid"]
                 rowid = msg["rowid"]
                 text = msg["text"].strip()
-
-                if echo_filter.is_echo(text):
-                    print(f"[{ts()}] [poll] dropped echo rowid={rowid}")
-                    continue
 
                 if not is_authorized(msg, handles, self_chat):
                     entry = f"[{datetime.now().isoformat()}] BLOCKED rowid={rowid} handle={msg['handle']!r} text={text!r}\n"
